@@ -1,13 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
-import {
-  Download as DownloadIcon,
-  Image as ImageIcon,
-  Upload as UploadIcon,
-  Wand2 as WandIcon,
-} from "lucide-react";
+import { Download, Upload, Image as ImageIcon, Wand2 } from "lucide-react";
 
-/* ============ 1) TEMÁTICAS PARA ROTAR PORTADAS ============ */
+/* -------------------- TEMÁTICAS -------------------- */
 const THEMES = {
   regalo: { title: "LE DIMOS UN IMPULSO GIGANTE 🚀", sub: "Su negocio hoy luce diferente" },
   rescate: { title: "LLEGAMOS CUANDO MÁS LO NECESITABA", sub: "Mira cómo lo resolvimos en minutos" },
@@ -25,359 +20,227 @@ const THEMES = {
   sueno: { title: "SUEÑOS QUE SE CONSTRUYEN TRABAJANDO", sub: "Hoy dimos un paso más" },
 };
 
-/* ============ 2) UI BÁSICA (botones, inputs, tarjetas) ============ */
-const Button = ({ className = "", children, ...props }) => (
+const Label = ({ children }) => (
+  <label className="block text-sm font-semibold text-gray-700 mb-1">{children}</label>
+);
+const Input = (props) => (
+  <input {...props} className={`w-full border rounded-xl px-3 py-2 text-sm ${props.className || ""}`} />
+);
+const Button = ({ children, className = "", ...p }) => (
   <button
-    className={`px-4 py-2 rounded-2xl shadow-sm border border-black/10 bg-white hover:bg-gray-50 active:scale-[0.98] transition ${className}`}
-    {...props}
+    {...p}
+    className={`px-4 py-2 rounded-xl bg-white border border-gray-300 shadow-sm hover:bg-gray-50 active:scale-95 transition ${className}`}
   >
     {children}
   </button>
 );
 
-const Card = ({ className = "", children }) => (
-  <div className={`rounded-3xl shadow-lg border border-black/10 bg-white p-4 ${className}`}>{children}</div>
-);
-
-const Label = ({ children, htmlFor }) => (
-  <label htmlFor={htmlFor} className="text-sm font-medium text-gray-700">
-    {children}
-  </label>
-);
-
-const Input = ({ className = "", ...props }) => (
-  <input
-    className={`w-full rounded-xl border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 ${className}`}
-    {...props}
-  />
-);
-
-const Textarea = ({ className = "", ...props }) => (
-  <textarea
-    className={`w-full rounded-xl border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 ${className}`}
-    {...props}
-  />
-);
-
-/* ============ 3) HELPERS ============ */
-const readFileAsDataURL = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
-/* ============ 4) APP PRINCIPAL ============ */
+/* -------------------- APP -------------------- */
 export default function App() {
-  // Imagenes persistentes
+  const [themeKey, setThemeKey] = useState("regalo");
+  const [headline, setHeadline] = useState(THEMES.regalo.title);
+  const [subhead, setSubhead] = useState(THEMES.regalo.sub);
+  const [businessName, setBusinessName] = useState("Cerrajería Totti");
+  const [city, setCity] = useState("Shushufindi");
+  const [signature, setSignature] = useState("Criss Lombeida");
+  const [contrast, setContrast] = useState(100);
+  const [spark, setSpark] = useState(80);
+
+  const [titleSize, setTitleSize] = useState(26);
+  const [subtitleSize, setSubtitleSize] = useState(18);
+  const [signatureSize, setSignatureSize] = useState(20);
+  const [logoSize, setLogoSize] = useState(48);
+
+  const [tone, setTone] = useState("warm");
+
   const [crissFace, setCrissFace] = useState(null);
   const [tottiFace, setTottiFace] = useState(null);
   const [logo, setLogo] = useState(null);
+  const thumbRef = useRef(null);
 
-  // Textos portada
-  const [businessName, setBusinessName] = useState("Cerrajería Totti");
-  const [city, setCity] = useState("Shushufindi");
-  const [headline, setHeadline] = useState("LE REGALAMOS SU PROPIA WEB 💻");
-  const [subhead, setSubhead] = useState("Y NO PUDO CREERLO…");
-  const [brandSignature, setBrandSignature] = useState("Criss Lombeida");
+  useEffect(() => {
+    const savedFace = localStorage.getItem("crissFace");
+    const savedLogo = localStorage.getItem("crissLogo");
+    if (savedFace) setCrissFace(savedFace);
+    if (savedLogo) setLogo(savedLogo);
+  }, []);
 
-  // Estética
-  const [tone, setTone] = useState("warm"); // warm | cool | neutral
-  const [contrast, setContrast] = useState(95); // 50-110
-  const [sparkIntensity, setSparkIntensity] = useState(80); // 0-100
+  const handleUpload = async (e, setter, key) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setter(reader.result);
+      if (key) localStorage.setItem(key, reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
-  // Temática
-  const [themeKey, setThemeKey] = useState("regalo");
+  const exportPNG = async () => {
+    const node = thumbRef.current;
+    if (!node) return;
+    const dataUrl = await toPng(node, { pixelRatio: 2 });
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `${businessName}_thumbnail.png`;
+    a.click();
+  };
+
   const applyTheme = (key) => {
     setThemeKey(key);
     setHeadline(THEMES[key].title);
     setSubhead(THEMES[key].sub);
   };
 
-  // Duración guion
-  const [duration, setDuration] = useState("45"); // 45 | 120
-
-  // Cargar desde localStorage rostro y logo
-  useEffect(() => {
-    const savedCriss = localStorage.getItem("crissFaceDataURL");
-    const savedLogo = localStorage.getItem("crissLogoDataURL");
-    if (savedCriss) setCrissFace(savedCriss);
-    if (savedLogo) setLogo(savedLogo);
-  }, []);
-
-  // Subidas de imágenes
-  const handleUpload = async (e, setter, persistKey) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const dataURL = await readFileAsDataURL(file);
-    setter(dataURL);
-    if (persistKey) localStorage.setItem(persistKey, dataURL);
-  };
-
-  // Exportar PNG (nativo, sin file-saver)
-  const thumbRef = useRef(null);
-  const exportPNG = async () => {
-    if (!thumbRef.current) return;
-    const dataUrl = await toPng(thumbRef.current, { pixelRatio: 2 });
-    const a = document.createElement("a");
-    a.href = dataUrl;
-    a.download = `${businessName.replace(/\s+/g, "_")}_thumbnail.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
-
-  // Generar guion psicológico
-  const script = useMemo(() => {
-    const d = parseInt(duration, 10);
-    const short = d === 45;
-
-    const t = THEMES[themeKey]; // para ajustar tono si quisieras
-    const lines = [];
-    // Hook
-    lines.push(`HOOK (0–3s): Esto pasó HOY en ${city} 🔥 Llegamos a ${businessName}, un negocio que no se rinde.`);
-    // Acción
-    lines.push(
-      `ACCIÓN (3–${short ? 20 : 40}s): Mostrar al dueño trabajando (soldadura / esmeril), cortes cada 3s, subtítulos dinámicos: "${businessName} 🔑 | ${city}".`
-    );
-    // Pico
-    lines.push(
-      `PICO EMOCIONAL (${short ? 21 : 41}–${short ? 30 : 70}s): Entrega de la app web en el celular, reacción y sonrisa.`
-    );
-    // Post pico
-    lines.push(
-      `POST-PICO (${short ? 31 : 71}–${short ? 38 : 100}s): "Esto… esto es lo que vale la pena. Ver a un ecuatoriano feliz porque alguien creyó en su trabajo." (pausa 1–2s).`
-    );
-    // Cierre
-    lines.push(
-      `CIERRE (${short ? 39 : 101}–${short ? 45 : 120}s): "Seguimos mañana con otro emprendedor. Si crees en los que trabajan con el corazón, únete a esta comunidad."`
-    );
-    // Anclaje de temática (para recordarte qué elegiste)
-    lines.push(`\n[Temática elegida: ${t.title}]`);
-    return lines.join("\n");
-  }, [businessName, city, duration, themeKey]);
-
-  // Overlays
-  const sparkMask = {
-    backgroundImage:
-      sparkIntensity > 0
-        ? `radial-gradient(circle at 70% 70%, rgba(255,180,80,${sparkIntensity / 150}) 0, rgba(255,140,0,${
-            sparkIntensity / 200
-          }) 20%, transparent 40%), radial-gradient(circle at 80% 60%, rgba(255,220,120,${
-            sparkIntensity / 180
-          }) 0, transparent 50%)`
-        : "none",
-  };
   const toneOverlay =
     {
       warm: "from-amber-300/20 via-orange-400/10 to-transparent",
-      cool: "from-sky-400/15 via-blue-500/10 to-transparent",
+      cool: "from-sky-400/20 via-blue-500/10 to-transparent",
       neutral: "from-white/10 via-white/0 to-transparent",
     }[tone] || "from-amber-300/20 via-orange-400/10 to-transparent";
 
+  const sparkMask = {
+    backgroundImage:
+      spark > 0
+        ? `radial-gradient(circle at 70% 70%, rgba(255,200,120,${spark / 200}) 0, transparent 50%), radial-gradient(circle at 80% 50%, rgba(255,150,0,${
+            spark / 180
+          }) 0, transparent 50%)`
+        : "none",
+  };
+
   return (
-    <div className="min-h-screen w-full p-4 md:p-8 bg-gradient-to-b from-blue-50 to-white">
-      <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Columna izquierda: controles */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card>
-            <h2 className="text-xl font-bold mb-3">Ajustes de Portada</h2>
+    <div className="min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white font-[Inter]">
+      <div className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
+          <div className="bg-white p-4 rounded-3xl shadow-md">
+            <h2 className="font-bold text-xl mb-3">Ajustes de Portada</h2>
 
-            <div className="space-y-3">
-              <div>
-                <Label>Temática</Label>
-                <select
-                  value={themeKey}
-                  onChange={(e) => applyTheme(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2"
-                >
-                  {Object.entries(THEMES).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <Label>Temática</Label>
+            <select
+              value={themeKey}
+              onChange={(e) => applyTheme(e.target.value)}
+              className="w-full border rounded-xl px-3 py-2 mb-3"
+            >
+              {Object.entries(THEMES).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v.title}
+                </option>
+              ))}
+            </select>
 
-              <div>
-                <Label>Negocio</Label>
-                <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
-              </div>
-              <div>
-                <Label>Ciudad</Label>
-                <Input value={city} onChange={(e) => setCity(e.target.value)} />
-              </div>
-              <div>
-                <Label>Título (arriba)</Label>
-                <Input value={headline} onChange={(e) => setHeadline(e.target.value)} />
-              </div>
-              <div>
-                <Label>Subtítulo (debajo)</Label>
-                <Input value={subhead} onChange={(e) => setSubhead(e.target.value)} />
-              </div>
-              <div>
-                <Label>Firma</Label>
-                <Input value={brandSignature} onChange={(e) => setBrandSignature(e.target.value)} />
-              </div>
+            <Label>Negocio</Label>
+            <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+            <Label>Ciudad</Label>
+            <Input value={city} onChange={(e) => setCity(e.target.value)} />
+            <Label>Título</Label>
+            <Input value={headline} onChange={(e) => setHeadline(e.target.value)} />
+            <Label>Subtítulo</Label>
+            <Input value={subhead} onChange={(e) => setSubhead(e.target.value)} />
+            <Label>Firma</Label>
+            <Input value={signature} onChange={(e) => setSignature(e.target.value)} />
 
-              <div className="grid grid-cols-3 gap-2">
-                <Button onClick={() => setTone("warm")} className={tone === "warm" ? "bg-orange-100" : ""}>
-                  Cálido
-                </Button>
-                <Button onClick={() => setTone("cool")} className={tone === "cool" ? "bg-sky-100" : ""}>
-                  Frío
-                </Button>
-                <Button onClick={() => setTone("neutral")} className={tone === "neutral" ? "bg-gray-100" : ""}>
-                  Neutro
-                </Button>
-              </div>
+            <Label>Tamaño de texto (Título)</Label>
+            <Input type="range" min="16" max="40" value={titleSize} onChange={(e) => setTitleSize(e.target.value)} />
+            <Label>Tamaño de subtítulo</Label>
+            <Input type="range" min="12" max="28" value={subtitleSize} onChange={(e) => setSubtitleSize(e.target.value)} />
+            <Label>Tamaño de firma</Label>
+            <Input type="range" min="12" max="32" value={signatureSize} onChange={(e) => setSignatureSize(e.target.value)} />
+            <Label>Tamaño del logo</Label>
+            <Input type="range" min="30" max="100" value={logoSize} onChange={(e) => setLogoSize(e.target.value)} />
 
-              <div>
-                <Label>Contraste (%)</Label>
-                <Input type="range" min={50} max={110} value={contrast} onChange={(e) => setContrast(e.target.value)} />
-              </div>
-              <div>
-                <Label>Intensidad de chispas (%)</Label>
-                <Input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={sparkIntensity}
-                  onChange={(e) => setSparkIntensity(e.target.value)}
-                />
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <h2 className="text-xl font-bold mb-3">Imágenes</h2>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Button onClick={() => document.getElementById("crissInput").click()}>
-                  <UploadIcon className="w-4 h-4 mr-2" />
-                  Cargar rostro base (Criss)
-                </Button>
-                <input
-                  id="crissInput"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleUpload(e, setCrissFace, "crissFaceDataURL")}
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button onClick={() => document.getElementById("tottiInput").click()}>
-                  <ImageIcon className="w-4 h-4 mr-2" />
-                  Cargar foto del emprendedor
-                </Button>
-                <input
-                  id="tottiInput"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleUpload(e, setTottiFace)}
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button onClick={() => document.getElementById("logoInput").click()}>
-                  <WandIcon className="w-4 h-4 mr-2" />
-                  Cargar logo (PNG fondo transparente)
-                </Button>
-                <input
-                  id="logoInput"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleUpload(e, setLogo, "crissLogoDataURL")}
-                />
-              </div>
-
-              <p className="text-xs text-gray-500">
-                Tu rostro y logo quedan guardados en este navegador (localStorage).
-              </p>
-            </div>
-          </Card>
-
-          <Card>
-            <h2 className="text-xl font-bold mb-3">Guion psicológico</h2>
-            <div className="flex gap-2 mb-2">
-              <Button className={duration === "45" ? "bg-blue-100" : ""} onClick={() => setDuration("45")}>
-                Corto 45s
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <Button onClick={() => setTone("warm")} className={tone === "warm" ? "bg-orange-100" : ""}>
+                Cálido
               </Button>
-              <Button className={duration === "120" ? "bg-blue-100" : ""} onClick={() => setDuration("120")}>
-                Extendido 2 min
+              <Button onClick={() => setTone("cool")} className={tone === "cool" ? "bg-sky-100" : ""}>
+                Frío
+              </Button>
+              <Button onClick={() => setTone("neutral")} className={tone === "neutral" ? "bg-gray-100" : ""}>
+                Neutro
               </Button>
             </div>
-            <Textarea rows={10} value={script} readOnly />
-            <p className="text-xs text-gray-500 mt-2">
-              Incluye: sesgo de recencia, cortes cada 3s, pico emocional, pausa empática y CTA.
-            </p>
-          </Card>
+
+            <Label>Contraste</Label>
+            <Input type="range" min="60" max="130" value={contrast} onChange={(e) => setContrast(e.target.value)} />
+            <Label>Chispas</Label>
+            <Input type="range" min="0" max="100" value={spark} onChange={(e) => setSpark(e.target.value)} />
+          </div>
+
+          <div className="bg-white p-4 rounded-3xl shadow-md space-y-3">
+            <h2 className="font-bold text-xl mb-2">Imágenes</h2>
+            <Button onClick={() => document.getElementById("crissFace").click()}>
+              <Upload className="w-4 h-4 inline mr-2" />
+              Cargar rostro Criss
+            </Button>
+            <input id="crissFace" type="file" className="hidden" onChange={(e) => handleUpload(e, setCrissFace, "crissFace")} />
+
+            <Button onClick={() => document.getElementById("tottiFace").click()}>
+              <ImageIcon className="w-4 h-4 inline mr-2" />
+              Cargar emprendedor
+            </Button>
+            <input id="tottiFace" type="file" className="hidden" onChange={(e) => handleUpload(e, setTottiFace)} />
+
+            <Button onClick={() => document.getElementById("logo").click()}>
+              <Wand2 className="w-4 h-4 inline mr-2" />
+              Cargar logo (PNG)
+            </Button>
+            <input id="logo" type="file" className="hidden" onChange={(e) => handleUpload(e, setLogo, "crissLogo")} />
+          </div>
         </div>
 
-        {/* Columna derecha: canvas de portada */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xl font-bold">Vista previa de Portada (1080×1920)</h2>
+        <div className="lg:col-span-2">
+          <div className="bg-white p-4 rounded-3xl shadow-md">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="font-bold text-xl">Vista Previa</h2>
               <Button onClick={exportPNG}>
-                <DownloadIcon className="w-4 h-4 mr-2 inline" />
+                <Download className="w-4 h-4 inline mr-2" />
                 Exportar PNG
               </Button>
             </div>
 
-            <div className="w-full flex justify-center">
+            <div className="flex justify-center">
               <div
                 ref={thumbRef}
-                className="relative w-[270px] h-[480px] md:w-[360px] md:h-[640px] lg:w-[405px] lg:h-[720px] bg-black overflow-hidden rounded-2xl"
+                className="relative w-[270px] h-[480px] bg-black rounded-2xl overflow-hidden"
                 style={{ filter: `contrast(${contrast}%)` }}
               >
-                {/* Tono/gradiente */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${toneOverlay}`} />
 
-                {/* Fondo: emprendedor */}
                 {tottiFace ? (
-                  <img src={tottiFace} alt="emprendedor" className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                  <img src={tottiFace} className="absolute inset-0 w-full h-full object-cover opacity-80" />
                 ) : (
-                  <div className="absolute inset-0 grid place-items-center text-white/60 text-sm">
-                    Sube la foto del emprendedor
-                  </div>
+                  <div className="absolute inset-0 grid place-items-center text-white/60">Sube foto del negocio</div>
                 )}
 
-                {/* Chispas/luces */}
                 <div className="absolute inset-0 pointer-events-none" style={sparkMask} />
 
-                {/* Titulares */}
-                <div className="absolute top-3 left-3 right-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-                  <div className="text-[20px] leading-tight font-extrabold text-yellow-300 uppercase">{headline}</div>
-                  <div className="mt-1 text-[14px] font-extrabold text-white uppercase">{subhead}</div>
+                <div className="absolute top-3 left-3 right-3 text-center text-white font-extrabold drop-shadow-lg">
+                  <div style={{ fontSize: `${titleSize}px` }}>{headline}</div>
+                  <div style={{ fontSize: `${subtitleSize}px` }} className="mt-1 text-yellow-300">
+                    {subhead}
+                  </div>
                 </div>
 
-                {/* Criss foreground */}
                 {crissFace && (
-                  <img
-                    src={crissFace}
-                    alt="Criss"
-                    className="absolute bottom-0 left-0 w-[70%] object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
-                  />
+                  <img src={crissFace} className="absolute bottom-0 left-0 w-[70%] object-contain drop-shadow-lg" />
                 )}
 
-                {/* Marca */}
                 <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                  {logo && <img src={logo} alt="logo" className="w-10 h-10 object-contain" />}
-                  <span className="text-white/90 font-semibold italic">{brandSignature}</span>
+                  {logo && <img src={logo} style={{ width: `${logoSize}px`, height: `${logoSize}px` }} />}
+                  <span
+                    style={{ fontSize: `${signatureSize}px`, fontFamily: "Dancing Script, cursive" }}
+                    className="text-white italic"
+                  >
+                    {signature}
+                  </span>
                 </div>
 
-                {/* Tag negocio */}
-                <div className="absolute bottom-3 left-3 bg-white/90 text-black text-[12px] px-2 py-1 rounded-lg shadow">
+                <div className="absolute bottom-3 left-3 bg-white/90 text-black text-xs px-2 py-1 rounded-lg">
                   {businessName} • {city}
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </div>

@@ -1,3 +1,19 @@
+const THEMES = {
+  regalo: { title: "LE DIMOS UN IMPULSO GIGANTE 🚀", sub: "Su negocio hoy luce diferente" },
+  rescate: { title: "LLEGAMOS CUANDO MÁS LO NECESITABA", sub: "Mira cómo lo resolvimos en minutos" },
+  antesDespues: { title: "ASÍ CAMBIÓ EN 24 HORAS", sub: "Del taller al mundo digital" },
+  historia: { title: "DE SHUSHUFINDI PARA EL MUNDO 🌎", sub: "Un ecuatoriano que no se rinde" },
+  reto24h: { title: "24 HORAS PARA HACERLO POSIBLE", sub: "¿Lo logramos? Mira el final" },
+  transformacion: { title: "DE OFICIO A MARCA", sub: "La diferencia está en cómo te ven" },
+  dolorVentas: { title: "ESTABA PERDIENDO CLIENTES 😢", sub: "Hasta que hicimos esto…" },
+  truco: { title: "EL TRUCO QUE NADIE TE CONTÓ", sub: "Así te encuentran más rápido" },
+  precio: { title: "LO QUE HICIMOS POR $0", sub: "Y el cambio fue brutal" },
+  testimonio: { title: "LO QUE DIJO SU PRIMER CLIENTE", sub: "Te vas a sorprender" },
+  error: { title: "EL ERROR #1 DE LOS NEGOCIOS", sub: "Y cómo lo corregimos hoy" },
+  comunidad: { title: "ESTO LO HICIMOS ENTRE TODOS", sub: "Gracias por apoyar a los que luchan" },
+  backstage: { title: "ASÍ SE VIVE CUANDO AYUDAMOS", sub: "Momentos reales, cero guion" },
+  sueno: { title: "SUEÑOS QUE SE CONSTRUYEN TRABAJANDO", sub: "Hoy dimos un paso más" },
+};
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { Download as DownloadIcon, Image as ImageIcon, Upload as UploadIcon, Wand2 as WandIcon } from "lucide-react";

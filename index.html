@@ -4,8 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Criss Thumbnail & Script Builder</title>
+
+    <!-- Tailwind por CDN (simple y rápido) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fuente bonita -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Config mínima de Tailwind (opcional) -->
+    <script>
+      tailwind.config = {
+        theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] } } }
+      }
+    </script>
+
+    <style>
+      /* Quita márgenes y usa la fuente */
+      html, body { margin:0; padding:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    </style>
   </head>
-  <body style="margin:0">
+  <body class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
